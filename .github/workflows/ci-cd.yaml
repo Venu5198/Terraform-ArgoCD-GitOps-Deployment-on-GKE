@@ -30,8 +30,8 @@ jobs:
 
       - name: Build & Push Docker image
         run: |
-          # Adjust 'backend/' below if your Dockerfile is elsewhere
-          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest backend/.
+          # Build from project root since Dockerfile is here
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest .
           docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest
 
       - name: Get GKE credentials
@@ -43,4 +43,3 @@ jobs:
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl rollout status deployment/backend-deployment --timeout=120s
-
