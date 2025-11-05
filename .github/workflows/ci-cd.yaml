@@ -24,12 +24,14 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           export_default_credentials: true
 
-      - name: Configure Docker
-        run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
       - name: Build & Push Docker image
         run: |
-          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest .
+          # Adjust 'backend/' below if your Dockerfile is elsewhere
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest backend/.
           docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:latest
 
       - name: Get GKE credentials
@@ -40,5 +42,5 @@ jobs:
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
-          kubectl rollout status deployment/backend-deployment
+          kubectl rollout status deployment/backend-deployment --timeout=120s
 
