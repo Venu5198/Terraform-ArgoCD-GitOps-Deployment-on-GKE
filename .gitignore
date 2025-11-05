@@ -1,0 +1,14 @@
+# Terraform directories and state
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+
+# Sensitive files
+github-ci-key.json
+
+# Logs and system files
+*.log
+.DS_Store
