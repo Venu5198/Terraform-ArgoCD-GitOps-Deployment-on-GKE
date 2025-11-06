@@ -4,6 +4,9 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: write  # ✅ Allow workflow to push back to the repo
+
 env:
   PROJECT_ID: venu-k
   REGION: us-central1
