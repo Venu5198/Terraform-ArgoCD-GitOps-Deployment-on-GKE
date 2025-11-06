@@ -17,24 +17,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------------
       # 1️⃣ Checkout repository
-      # -------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # -------------------------------
-      # 2️⃣ Write service account key safely
-      # -------------------------------
+      # 2️⃣ Write the GCP service account key directly
       - name: Create GCP credentials file
         run: |
-          echo "${{ secrets.GCP_SA_KEY }}" | base64 --decode > $HOME/gcp-key.json
-          ls -l $HOME/gcp-key.json
-          head -n 5 $HOME/gcp-key.json
+          echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcp-key.json
+          cat $HOME/gcp-key.json | head -n 5
 
-      # -------------------------------
       # 3️⃣ Set up gcloud
-      # -------------------------------
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v1
         with:
@@ -42,17 +35,13 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           export_default_credentials: true
 
-      # -------------------------------
       # 4️⃣ Authenticate Docker to Artifact Registry
-      # -------------------------------
       - name: Authenticate Docker
         run: |
           gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
           gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
-      # -------------------------------
       # 5️⃣ Build & Push Docker Image
-      # -------------------------------
       - name: Build and Push Docker image
         run: |
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)
@@ -62,16 +51,12 @@ jobs:
           docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG} .
           docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG}
 
-      # -------------------------------
       # 6️⃣ Update Kubernetes Manifests
-      # -------------------------------
       - name: Update Deployment Image Tag
         run: |
           sed -i "s|image: ${REGION}-docker.pkg.dev.*/${IMAGE}:.*|image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG}|g" k8s/deployment.yaml
 
-      # -------------------------------
       # 7️⃣ Commit & Push Manifest Changes
-      # -------------------------------
       - name: Commit and Push updated manifests
         run: |
           git config user.email "venukrishnaya@gmail.com"
@@ -80,9 +65,7 @@ jobs:
           git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
           git push origin main
 
-      # -------------------------------
       # 8️⃣ Trigger Argo CD Sync
-      # -------------------------------
       - name: Trigger ArgoCD Sync
         run: |
           argocd login 35.200.134.207 --username admin --password ${{ secrets.ARGOCD_ADMIN_PASS }} --insecure
