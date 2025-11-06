@@ -61,12 +61,16 @@ jobs:
 
       # 7️⃣ Commit & Push Manifest Changes
       - name: Commit and Push updated manifests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.email "venukrishnaya@gmail.com"
           git config user.name "Venu5198"
           git add k8s/deployment.yaml
           git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push origin main
+
 
       # 8️⃣ Trigger Argo CD Sync
       - name: Trigger ArgoCD Sync
