@@ -4,6 +4,9 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: write
+
 env:
   PROJECT_ID: venu-k
   REGION: us-central1
@@ -25,7 +28,7 @@ jobs:
       - name: Create GCP credentials file
         run: |
           echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcp-key.json
-          echo "Service account key created ✅"
+          echo "✅ Service account key created"
 
       # 3️⃣ Set up gcloud
       - name: Set up gcloud
@@ -46,7 +49,7 @@ jobs:
         run: |
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
-          echo "Building and pushing image with tag: ${IMAGE_TAG}"
+          echo "🚀 Building image with tag: ${IMAGE_TAG}"
 
           docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG} .
           docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG}
@@ -54,7 +57,7 @@ jobs:
       # 6️⃣ Update Kubernetes Manifests
       - name: Update Deployment Image Tag
         run: |
-          sed -i "s|image: ${REGION}-docker.pkg.dev.*/${IMAGE}:.*|image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG}|g" k8s/deployment.yaml
+          sed -i "s|image: .*|image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${IMAGE_TAG}|g" k8s/deployment.yaml
 
       # 7️⃣ Commit & Push Manifest Changes
       - name: Commit and Push updated manifests
@@ -74,12 +77,13 @@ jobs:
           echo "Installing ArgoCD CLI..."
           curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
           chmod +x /usr/local/bin/argocd
+          export PATH=$PATH:/usr/local/bin
           argocd version --client
 
       # 9️⃣ Trigger ArgoCD Sync
       - name: Trigger ArgoCD Sync
         run: |
-          echo "Triggering ArgoCD sync..."
+          echo "🚀 Triggering ArgoCD sync..."
+          export PATH=$PATH:/usr/local/bin
           argocd login 35.200.134.207 --username admin --password ${{ secrets.ARGOCD_ADMIN_PASS }} --insecure
           argocd app sync backend-app
-  
