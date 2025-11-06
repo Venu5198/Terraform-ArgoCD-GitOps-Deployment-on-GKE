@@ -4,9 +4,6 @@ on:
   push:
     branches: [ "main" ]
 
-permissions:
-  contents: write  # ✅ Allow workflow to push back to the repo
-
 env:
   PROJECT_ID: venu-k
   REGION: us-central1
@@ -24,11 +21,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Write the GCP service account key directly
+      # 2️⃣ Write GCP service account key (plain JSON)
       - name: Create GCP credentials file
         run: |
           echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcp-key.json
-          cat $HOME/gcp-key.json | head -n 5
+          echo "Service account key created ✅"
 
       # 3️⃣ Set up gcloud
       - name: Set up gcloud
@@ -71,9 +68,18 @@ jobs:
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push origin main
 
+      # 8️⃣ Install ArgoCD CLI
+      - name: Install ArgoCD CLI
+        run: |
+          echo "Installing ArgoCD CLI..."
+          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+          argocd version --client
 
-      # 8️⃣ Trigger Argo CD Sync
+      # 9️⃣ Trigger ArgoCD Sync
       - name: Trigger ArgoCD Sync
         run: |
+          echo "Triggering ArgoCD sync..."
           argocd login 35.200.134.207 --username admin --password ${{ secrets.ARGOCD_ADMIN_PASS }} --insecure
           argocd app sync backend-app
+  
